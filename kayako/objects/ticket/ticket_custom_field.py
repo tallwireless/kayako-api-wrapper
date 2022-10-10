@@ -136,7 +136,7 @@ class TicketCustomField(KayakoObject):
                 raise
 
         # Strip possible error text.
-        response = response.read()
+        response = response.data
         if response.startswith("<div"):
             response = "\n".join(response.split("\n")[1:])
 

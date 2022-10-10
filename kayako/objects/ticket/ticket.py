@@ -295,7 +295,7 @@ class Ticket(KayakoObject):
             % (cls.controller, departmentid, ticketstatusid, ownerstaffid, userid),
             "GET",
         )
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         return [
             Ticket(api, **cls._parse_ticket(api, ticket_tree))
             for ticket_tree in tree.findall("ticket")
@@ -310,7 +310,7 @@ class Ticket(KayakoObject):
                 return None
             else:
                 raise
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         node = tree.find("ticket")
         if node is None:
             return None
@@ -358,7 +358,7 @@ class Ticket(KayakoObject):
             )
 
         response = self.api._request(self.controller, "POST", **parameters)
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         node = tree.find("ticket")
         self._update_from_response(node)
 
@@ -378,7 +378,7 @@ class Ticket(KayakoObject):
             userid           The User ID, if you want to change the user for this ticket
         """
         response = self._save("%s/%s/" % (self.controller, self.id))
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         node = tree.find("ticket")
         self._update_from_response(node)
 

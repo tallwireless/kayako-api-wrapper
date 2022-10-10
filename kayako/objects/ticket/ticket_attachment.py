@@ -85,7 +85,7 @@ class TicketAttachment(KayakoObject):
             ticketid     The unique numeric identifier of the ticket.
         """
         response = api._request("%s/ListAll/%s" % (cls.controller, ticketid), "GET")
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         return [
             TicketAttachment(
                 api, **cls._parse_ticket_attachment(ticket_attachment_tree)
@@ -104,7 +104,7 @@ class TicketAttachment(KayakoObject):
                 return None
             else:
                 raise
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         node = tree.find("attachment")
         if node is None:
             return None
@@ -122,7 +122,7 @@ class TicketAttachment(KayakoObject):
             contents     The BASE64 encoded attachment contents
         """
         response = self._add(self.controller)
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         node = tree.find("attachment")
         self._update_from_response(node)
 

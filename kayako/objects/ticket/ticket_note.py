@@ -99,7 +99,7 @@ class TicketNote(KayakoObject):
             ticketid     The unique numeric identifier of the ticket.
         """
         response = api._request("%s/ListAll/%s" % (cls.controller, ticketid), "GET")
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         return [
             TicketNote(api, **cls._parse_ticket_note(ticket_note_tree, ticketid))
             for ticket_note_tree in tree.findall("note")
@@ -114,7 +114,7 @@ class TicketNote(KayakoObject):
                 return None
             else:
                 raise
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         node = tree.find("note")
         if node is None:
             return None
@@ -159,7 +159,7 @@ class TicketNote(KayakoObject):
             )
 
         response = self.api._request(self.controller, "POST", **parameters)
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         node = tree.find("note")
         self._update_from_response(node)
 

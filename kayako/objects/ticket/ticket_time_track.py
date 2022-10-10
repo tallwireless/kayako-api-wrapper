@@ -119,7 +119,7 @@ class TicketTimeTrack(KayakoObject):
             ticketid     The unique numeric identifier of the ticket.
         """
         response = api._request("%s/ListAll/%s" % (cls.controller, ticketid), "GET")
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         return [
             TicketTimeTrack(
                 api, **cls._parse_ticket_time_track(ticket_time_track_tree, ticketid)
@@ -136,7 +136,7 @@ class TicketTimeTrack(KayakoObject):
                 return None
             else:
                 raise
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
 
         print(etree.tostring(tree, pretty_print=True))
 
@@ -178,7 +178,7 @@ class TicketTimeTrack(KayakoObject):
                 )
 
         response = self.api._request(self.controller, "POST", **parameters)
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         node = tree.find("timetrack")
         self._update_from_response(node)
 

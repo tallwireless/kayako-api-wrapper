@@ -9,6 +9,9 @@
 Created on May 5, 2011
 
 @author: evan
+
+Updated on Oct 10, 2022
+@author: charlesr@deft.com
 """
 
 import base64
@@ -17,6 +20,7 @@ import hmac
 import logging
 import random
 import urllib3
+import urllib
 import time
 from datetime import datetime
 
@@ -358,6 +362,7 @@ class KayakoAPI(object):
         if not secret_key:
             raise KayakoInitializationError("Secret Key not specified.")
         self.api_key = api_key
+        self.http = urllib3.PoolManager()
 
     # { Communication Layer
 
@@ -410,10 +415,14 @@ class KayakoAPI(object):
                 if len(value):
                     for sub_value in value:
                         if first:
-                            data = "%s[]=%s" % (key, urllib3.quote(sub_value))
+                            data = "%s[]=%s" % (key, urllib.parse.quote(sub_value))
                             first = False
                         else:
-                            data = "%s&%s[]=%s" % (data, key, urllib3.quote(sub_value))
+                            data = "%s&%s[]=%s" % (
+                                data,
+                                key,
+                                urllib.parse.quote(sub_value),
+                            )
                 else:
                     if first:
                         data = "%s[]=" % key
@@ -421,10 +430,10 @@ class KayakoAPI(object):
                     else:
                         data = "%s&%s[]=" % (data, key)
             elif first:
-                data = "%s=%s" % (key, urllib3.quote(value))
+                data = "%s=%s" % (key, urllib.parse.quote(value))
                 first = False
             else:
-                data = "%s&%s=%s" % (data, key, urllib3.quote(value))
+                data = "%s&%s=%s" % (data, key, urllib.parse.quote(value))
         return data
 
     def _generate_signature(self):
@@ -435,10 +444,12 @@ class KayakoAPI(object):
         salt = str(random.getrandbits(32))
         # Use HMAC to encrypt the secret key using the salt with SHA256
         encrypted_signature = hmac.new(
-            self.secret_key, msg=salt, digestmod=hashlib.sha256
+            self.secret_key.encode("ascii"),
+            msg=salt.encode("ascii"),
+            digestmod=hashlib.sha256,
         ).digest()
         # Encode the bytes into base 64
-        b64_encoded_signature = base64.b64encode(encrypted_signature)
+        b64_encoded_signature = base64.b64encode(encrypted_signature).decode("ascii")
         return salt, b64_encoded_signature
 
     def _request(self, controller, method, **parameters):
@@ -450,47 +461,30 @@ class KayakoAPI(object):
 
         salt, b64signature = self._generate_signature()
 
+        url_get = f"{self.api_url}?e={urllib.parse.quote(controller)}&apikey={self.api_key}&salt={salt}&signature={b64signature}"
         if method == "GET":
-            url = "%s?e=%s&apikey=%s&salt=%s&signature=%s" % (
-                self.api_url,
-                urllib3.quote(controller),
-                urllib3.quote(self.api_key),
-                salt,
-                urllib3.quote(b64signature),
-            )
             # Append additional query args if necessary
+            url = url_get
+
             data = (
                 self._post_data(**self._sanitize_parameters(**parameters))
                 if parameters
                 else None
             )
+
             if data:
-                url = "%s&%s" % (url, data)
-            request = urllib3.Request(url)
+                url = f"{url}&{data}"
+
         elif method == "POST" or method == "PUT":
-            url = "%s?e=%s" % (self.api_url, urllib3.quote(controller))
+            url = f"{self.api_url}?e={urllib.parse.quote(controller)}"
             # Auth parameters go in the body for these methods
             parameters["apikey"] = self.api_key
             parameters["salt"] = salt
             parameters["signature"] = b64signature
             data = self._post_data(**self._sanitize_parameters(**parameters))
-            request = urllib3.Request(
-                url, data=data, headers={"Content-length": len(data) if data else 0}
-            )
-            request.get_method = lambda: method
         elif method == "DELETE":  # DELETE
-            url = "%s?e=%s&apikey=%s&salt=%s&signature=%s" % (
-                self.api_url,
-                urllib3.quote(controller),
-                urllib3.quote(self.api_key),
-                salt,
-                urllib3.quote(b64signature),
-            )
+            url = url_get
             data = self._post_data(**self._sanitize_parameters(**parameters))
-            request = urllib3.Request(
-                url, data=data, headers={"Content-length": len(data) if data else 0}
-            )
-            request.get_method = lambda: method
         else:
             raise KayakoRequestError(
                 "Invalid request method: %s not supported." % method
@@ -500,15 +494,19 @@ class KayakoAPI(object):
         log.debug("REQUEST DATA: %s" % data)
 
         try:
-            response = urllib3.urlopen(request)
-        except urllib3.HTTPError as error:
+            response = self.http.request(
+                method,
+                url,
+                headers={"Content-length": len(data) if data else 0},
+            )
+        except urllib3.exceptions.HTTPError as error:
             response_error = KayakoResponseError("%s: %s" % (error, error.read()))
             log.error(response_error)
             raise response_error
-        except urllib3.URLError as error:
-            request_error = KayakoRequestError(error)
-            log.error(request_error)
-            raise request_error
+        except Exception as error:
+            log.error(error)
+            raise error
+        print(response.data)
         return response
 
     # { Persistence Layer
@@ -662,7 +660,7 @@ class KayakoAPI(object):
             user=user,
             tags=tags,
         )
-        ticket_xml = etree.parse(response)
+        ticket_xml = etree.fromstring(response.data)
         return [
             Ticket(self, **Ticket._parse_ticket(self, ticket_tree))
             for ticket_tree in ticket_xml.findall("ticket")

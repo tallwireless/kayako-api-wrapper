@@ -128,7 +128,7 @@ class TicketPost(KayakoObject):
             ticketid     The unique numeric identifier of the ticket.
         """
         response = api._request("%s/ListAll/%s" % (cls.controller, ticketid), "GET")
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         return [
             TicketPost(api, **cls._parse_ticket_post(ticket_post_tree, ticketid))
             for ticket_post_tree in tree.findall("post")
@@ -143,7 +143,7 @@ class TicketPost(KayakoObject):
                 return None
             else:
                 raise
-        tree = etree.parse(response)
+        tree = etree.fromstring(response.data)
         node = tree.find("post")
         if node is None:
             return None
@@ -186,7 +186,7 @@ class TicketPost(KayakoObject):
             )
 
         response = self.api._request(self.controller, "POST", **parameters)
-        tree = etree.parse(response)
+        tree = etree.fromstring(response)
         node = tree.find("post")
         self._update_from_response(node)
 
