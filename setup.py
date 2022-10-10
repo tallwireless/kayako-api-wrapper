@@ -1,30 +1,28 @@
 # -*- coding: utf-8 -*-
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Copyright (c) 2011, Evan Leis
 #
 # Distributed under the terms of the Lesser GNU General Public License (LGPL)
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 from setuptools import setup, find_packages
 
-with open('kayako/README.txt') as readme:
+with open("kayako/README.txt") as readme:
     long_description = readme.read()
 
 setup(
-    name='kayako',
-    version='1.1.6',
+    name="kayako",
+    version="1.1.6",
     description="Python API Wrapper for Kayako 4.01.240",
     long_description=long_description,
-    author='Evan Leis',
-    author_email='engineergod@yahoo.com',
-    url='',
-    install_requires=[
-        'lxml',
-    ],
+    author="Evan Leis",
+    author_email="engineergod@yahoo.com",
+    url="",
+    install_requires=["lxml", "urllib3"],
     setup_requires=[],
     packages=find_packages(exclude=[]),
     include_package_data=True,
-    test_suite='kayako.tests',
+    test_suite="kayako.tests",
     package_data={},
     zip_safe=True,
     entry_points="""
@@ -32,7 +30,7 @@ setup(
     license="Lesser GNU General Public License (LGPL)",
     classifiers=[
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 3.10",
         "Development Status :: 4 - Beta",
         "Environment :: Other Environment",
         "Intended Audience :: Developers",
