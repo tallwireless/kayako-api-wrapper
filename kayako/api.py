@@ -519,7 +519,6 @@ class KayakoAPI(object):
         except Exception as error:
             log.error(error)
             raise error
-        print(f"DATA: {response.data.decode()}")
         return response
 
     # { Persistence Layer
