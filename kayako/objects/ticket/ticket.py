@@ -147,7 +147,8 @@ class Ticket(KayakoObject):
                 )
             )
             for ticket_time_track_tree in ticket_tree.findall("note")
-            if ticket_note_tree.get("type") == "timetrack"
+            if ticket_note_tree is not None
+            and ticket_note_tree.get("type") == "timetrack"
         ]
 
         posts = []
