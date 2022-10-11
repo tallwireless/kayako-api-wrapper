@@ -434,6 +434,7 @@ class KayakoAPI(object):
                 first = False
             else:
                 data = "%s&%s=%s" % (data, key, urllib.parse.quote(value))
+        print(data)
         return data
 
     def _generate_signature(self):
@@ -492,13 +493,25 @@ class KayakoAPI(object):
 
         log.debug("REQUEST URL: %s" % url)
         log.debug("REQUEST DATA: %s" % data)
-
+        response = None
         try:
-            response = self.http.request(
-                method,
-                url,
-                headers={"Content-length": len(data) if data else 0},
-            )
+
+            if data is None:
+                response = self.http.request(
+                    method,
+                    url,
+                    headers={"Content-length": len(data) if data else 0},
+                )
+            else:
+                response = self.http.request(
+                    method,
+                    url,
+                    body=data,
+                    headers={
+                        "Content-length": len(data) if data else 0,
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                )
         except urllib3.exceptions.HTTPError as error:
             response_error = KayakoResponseError("%s: %s" % (error, error.read()))
             log.error(response_error)
@@ -506,6 +519,7 @@ class KayakoAPI(object):
         except Exception as error:
             log.error(error)
             raise error
+        print(f"DATA: {response.data.decode()}")
         return response
 
     # { Persistence Layer
