@@ -14,7 +14,10 @@ from lxml import etree
 
 from kayako.core.lib import UnsetParameter
 from kayako.core.object import KayakoObject
+from kayako.objects.department import Department
 from kayako.objects.ticket.ticket_note import TicketNote
+from kayako.objects.ticket.ticket_status import TicketStatus
+from kayako.objects.ticket.ticket_priority import TicketPriority
 from kayako.objects.ticket.ticket_post import TicketPost
 from kayako.objects.ticket.ticket_time_track import TicketTimeTrack
 from kayako.exception import KayakoRequestError, KayakoResponseError
@@ -48,8 +51,10 @@ class Ticket(KayakoObject):
         "email",
         "contents",
         "departmentid",
+        "departmentname",
         "ticketstatusid",
         "ticketpriorityid",  # synonym for priorityid
+        "ticketpriorityname",  # synonym for priorityid
         "tickettypeid",
         "userid",
         "staffid",
@@ -58,6 +63,7 @@ class Ticket(KayakoObject):
         "flagtype",
         "displayid",
         "statusid",
+        "statusname",
         "typeid",
         "userorganization",
         "userorganizationid",
@@ -207,6 +213,13 @@ class Ticket(KayakoObject):
             posts=posts,
             timetracks=timetracks,
         )
+        params["departmentname"] = Department.get(
+            id=params["departmentid"], api=api
+        ).title
+        params["ticketpriorityname"] = TicketPriority.get(
+            api=api, id=params["ticketpriorityid"]
+        ).title
+        params["statusname"] = TicketStatus.get(api=api, id=params["statusid"]).title
         return params
 
     def _update_from_response(self, ticket_tree):

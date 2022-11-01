@@ -62,7 +62,6 @@ class TicketPriority(KayakoObject):
     @classmethod
     def get_all(cls, api):
         response = api._request(cls.controller, "GET")
-        print(type(response.data.decode()))
         tree = etree.fromstring(response.data)
         print(tree)
         return [
@@ -73,7 +72,7 @@ class TicketPriority(KayakoObject):
     @classmethod
     def get(cls, api, id):
         response = api._request("%s/%s/" % (cls.controller, id), "GET")
-        tree = etree.fromstring(response.data.encode())
+        tree = etree.fromstring(response.data)
         node = tree.find("ticketpriority")
         if node is None:
             return None
